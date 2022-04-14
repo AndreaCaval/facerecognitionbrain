@@ -19,7 +19,7 @@ class Signin extends React.Component {
     }
 
     onSubmitSignIn = () => {
-        fetch('http://localhost:3000/signin', {
+        fetch('https://smart-brain-cava.herokuapp.com/signin', {
             method: 'post',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -29,7 +29,6 @@ class Signin extends React.Component {
         })
         .then(res => res.json())
         .then(user =>{
-            console.log(user);
             if(user.id){
                 this.props.loadUser(user);
                 this.props.onRouteChange('home')

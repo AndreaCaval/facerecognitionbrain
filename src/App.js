@@ -80,23 +80,25 @@ const particlesOprions = {
   detectRetina: true,
 }
 
+const initialState = {
+  input: '',
+  imageUrl: '',
+  box: {},
+  route: 'signin',
+  isSignedIn: false,
+  user: {
+    id: '',
+    name: '',
+    email: '',
+    entries: 0,
+    joined: ''
+  }
+}
+
 class App extends Component {
   constructor() {
     super()
-    this.state = {
-      input: '',
-      imageUrl: '',
-      box: {},
-      route: 'signin',
-      isSignedIn: false,
-      user: {
-        id: '',
-        name: '',
-        email: '',
-        entries: 0,
-        joined: ''
-      }
-    }
+    this.state = initialState
   }
 
   loadUser = (data) => {
@@ -117,7 +119,6 @@ class App extends Component {
     const image = document.getElementById('inputimage')
     const width = Number(image.width)
     const height = Number(image.height)
-    console.log(width, height);
     return {
       leftCol: clarifaiFace.left_col * width,
       topRow: clarifaiFace.top_row * height,
@@ -128,7 +129,6 @@ class App extends Component {
 
   displayFaceBox = (box) => {
     this.setState({ box: box })
-    console.log(box);
   }
 
   onInputChange = (event) => {
@@ -136,60 +136,41 @@ class App extends Component {
   }
 
   onButtonSubmit = () => {
+    if (this.state.input === '') {
+      console.log('enter img link');
+      return
+    }
+
     this.setState({ imageUrl: this.state.input })
 
-    const raw = JSON.stringify({
-      "user_app_id": {
-        "user_id": "cava",
-        "app_id": "brain"
-      },
-      "inputs": [
-        {
-          "data": {
-            "image": {
-              "url": this.state.input
-            }
-          }
-        }
-      ]
-    });
-
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Key f8abbd64c94342b68ff783002c3daa20'
-      },
-      body: raw
-    };
-
-
-    fetch("https://api.clarifai.com/v2/models/face-detection/versions/6dc7e46bc9124c5c8824be4822abe105/outputs", requestOptions)
-      .then(response => response.json())
+    fetch('https://smart-brain-cava.herokuapp.com/imageUrl', {
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: this.state.input
+      })
+    }).then(result => result.json())
       .then(result => {
         if (result) {
-          fetch('http://localhost:3000/image', {
+          fetch('https://smart-brain-cava.herokuapp.com/image', {
             method: 'put',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               id: this.state.user.id
             })
           }).then(res => res.json())
-            .then(count => {
-              this.setState(Object.assign(this.state.user, { entries: count }))
-            })
-        }
+            .then(count => { this.setState(Object.assign(this.state.user, { entries: count })) })
+            .catch(console.log)
 
-        this.displayFaceBox(this.calculateFaceLocation(result))
+          this.displayFaceBox(this.calculateFaceLocation(result))
+        }
       })
       .catch(error => console.log('error', error));
-
-    console.log('click');
   }
 
   onRouteChange = (route) => {
     if (route === 'signout') {
-      this.setState({ isSignedIn: false })
+      this.setState(initialState)
     }
     else if (route === 'home') {
       this.setState({ isSignedIn: true })
@@ -200,7 +181,7 @@ class App extends Component {
   render() {
     const { isSignedIn, imageUrl, route, box } = this.state
     return (
-      <div className="App">
+      <div className="App" >
         <Particles className='particles'
           params={particlesOprions} />
         <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange} />
